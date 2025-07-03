@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    button {
+      background-color: #4CAF50;
+      padding: 3px 6px;
+      margin-left: 6px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    button:hover {
+      background-color: #45a049;
+      box-shadow: 0 2px #666;
+      cursor: pointer;
+    }
+    button:active {
+      background-color: #3e8e41;
+      box-shadow: 0 1px #666;
+      transform: translateY(4px);
+    }
+    button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.5s ease-out;
+    }
+    button:hover::after {
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+  </style>
+</head>
+<body>
+  <div id="main_body">
+    <label for="filename">Enter the filename for the CSV file:</label>
+    <input type="text" id="filename" name="filename">
+    <input type="hidden" id="sheetName">
+    <button onclick="exportCSV()">Export</button>
+  </div>
+  <div id="content"></div>
+  <script>
+    // Function to export CSV data
+    function exportCSV() {
+      var filename = document.getElementById('filename').value;
+      var sheetName = document.getElementById('sheetName').value;
+      if (!filename) {
+        document.getElementById('content').innerHTML = '<p>No filename entered. Export cancelled.</p>';
+        return;
+      }
+
+      // Call the Google Apps Script function to export data
+      google.script.run.withSuccessHandler(function(result) {
+        if (result.success) {
+          // Create a download link for the CSV file
+          var link = document.createElement('a');
+          link.href = result.url;
+          link.download = filename + '.csv';
+          link.style.display = 'block';
+          link.style.marginTop = '20px';
+          link.innerText = 'Download CSV';
+          
+          // Display the download link
+          document.getElementById('content').innerHTML = '<p>Your file is ready. Click the link below to download.</p>';
+          document.getElementById('content').appendChild(link);
+        } else {
+          document.getElementById('content').innerHTML = '<p>' + result.message + '</p>';
+        }
+      }).exportToCSV(sheetName, filename);
+    }
+
+    // Set the hidden sheet name field value when the document is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      var sheetName = document.getElementById('sheetName').value;
+      if (sheetName) {
+        document.getElementById('sheetName').value = sheetName;
+      }
+    });
+  </script>
+</body>
+</html>
