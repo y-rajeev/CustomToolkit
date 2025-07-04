@@ -5,7 +5,7 @@
 function importSpecificColumns() {
     try {
       const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Encasa Ledger");
-      const sourceSpreadsheetId = PropertiesService.getScriptProperties().getProperties("sourceSpreadsheetId")
+      const sourceSpreadsheetId = PropertiesService.getScriptProperties().getProperty("sourceSpreadsheetId")
       const sourceSheet = SpreadsheetApp.openById(sourceSpreadsheetId).getSheetByName("Order Ledger - Encasa");
   
       // Get last row to avoid scanning unnecessary empty rows
