@@ -4,7 +4,7 @@
 function backupSheet() {
     var sheet = SpreadsheetApp.getActiveSpreadsheet();
     var sheetName = sheet.getName();
-    var backupFolderId = PropertiesService.getScriptProperties().getProperties("backupFolderId") // Folder ID
+    var backupFolderId = PropertiesService.getScriptProperties().getProperty("backupFolderId") // Folder ID
     var folder = DriveApp.getFolderById(backupFolderId);
     var file = DriveApp.getFileById(sheet.getId());
     

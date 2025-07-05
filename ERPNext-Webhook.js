@@ -12,17 +12,20 @@ function doPost(e) {
     
     // Extract necessary fields from the incoming data
     var newRow = [
-      invoiceData.creation,            // Column B: doc.posting_date
-      invoiceData.vch_no,              // Column C: doc.name
-      invoiceData.shipment_id,         // Column D: doc.custom_shipment_id
-      invoiceData.channel_abb,         // Column E: doc.custom_destination
-      invoiceData.mode,                // Column F: doc.custom_shipment_mode
-      invoiceData.branch,              // Column G: doc.branch
-      invoiceData.dispatch_date,       // Column H: doc.custom_shipment_date
-      invoiceData.eta_date,            // Column I: doc.custom_eta_date
-      invoiceData.total_qty,           // Column J: doc.total_qty
-      invoiceData.status,              // Column K: doc.custom_inbound_status
-      invoiceData.repository           // Column L: doc.custom_repository
+      invoiceData.creation,                   // Column B: doc.posting_date
+      invoiceData.vch_no,                     // Column C: doc.name
+      invoiceData.shipment_id,                // Column D: doc.custom_shipment_id
+      invoiceData.channel_abb,                // Column E: doc.custom_destination
+      invoiceData.mode,                       // Column F: doc.custom_shipment_mode
+      invoiceData.branch,                     // Column G: doc.branch
+      invoiceData.dispatch_date,              // Column H: doc.custom_shipment_date
+      invoiceData.eta_date,                   // Column I: doc.custom_eta_date
+      invoiceData.repository,                 // Column J: doc.custom_repository
+      invoiceData.status,                     // Column K: doc.custom_inbound_status
+      invoiceData.total_qty,                  // Column L: doc.total_qty
+      invoiceData.net_total,                  // Column M: doc.net_total
+      invoiceData.total_taxes_and_charges,    // Column N: doc.total_taxes_and_charges
+      invoiceData.grand_total                 // Column O: doc.grand_total
     ];
     
     // Determine the last row to append new data below existing data

@@ -30,9 +30,12 @@ function pushShipmentToSupabase() {
       branch: rowObj["branch"] || null,
       dispatch_date: rowObj["dispatch_date"] ? formatDate(rowObj["dispatch_date"]) : null,
       eta_date: rowObj["eta_date"] ? formatDate(rowObj["eta_date"]) : null,
-      total_qty: parseInt(rowObj["total_qty"]) || null,
-      status: rowObj["status"] || null,
       repository: rowObj["repository"] || null,
+      status: rowObj["status"] || null,
+      total_qty: parseInt(rowObj["total_qty"]) || null,
+      net_total: parseInt(rowObj["net_total"]) || null,
+      total_taxes_and_charges: parseFloat(rowObj["total_taxes_and_charges"]) || null,
+      grand_total: parseFloat(rowObj["grand_total"]),
       month: rowObj["month"] ? formatDate(rowObj["month"]) : null,
     });
   });

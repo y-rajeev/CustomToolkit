@@ -12,7 +12,7 @@ function postItemToERPNext() {
   const config = {
     apiKey: PropertiesService.getScriptProperties().getProperty('API_KEY'),
     apiSecret: PropertiesService.getScriptProperties().getProperty('API_SECRET'),
-    baseUrl: PropertiesService.getScriptProperties().getProperties('baseUrl'),
+    baseUrl: PropertiesService.getScriptProperties().getProperty('baseUrl'),
     logDetails: false
   };
 
@@ -155,7 +155,7 @@ function fetchERPItem() {
   var apiKey = PropertiesService.getScriptProperties().getProperty('API_KEY');
   var apiSecret = PropertiesService.getScriptProperties().getProperty('API_SECRET');
 
-  var baseUrl = PropertiesService.getScriptProperties().getProperties('baseUrl');
+  var baseUrl = PropertiesService.getScriptProperties().getProperty('baseUrl');
   var reportName = "Item List";
 
   var headers = {

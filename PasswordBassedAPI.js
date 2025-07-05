@@ -1,6 +1,6 @@
 function pullDataFromERPNext() {
-  var loginUrl = PropertiesService.getScriptProperties().getProperties('loginUrl');
-  var apiUrl = PropertiesService.getScriptProperties().getProperties('apiUrl');
+  var loginUrl = PropertiesService.getScriptProperties().getProperty('loginUrl');
+  var apiUrl = PropertiesService.getScriptProperties().getProperty('apiUrl');
   var usr = PropertiesService.getScriptProperties().getProperty('usr');
   var pwd = PropertiesService.getScriptProperties().getProperty('pwd');
 

@@ -7,7 +7,7 @@ function updateStatusFrmExtSheet() {
   const uploadedInvoiceSheet = ss.getSheetByName("Uploaded Invoice")
 
   // Access external sheet by url
-  const externalSheetID = PropertiesService.getScriptProperties().getProperties('externalSheetID');
+  const externalSheetID = PropertiesService.getScriptProperties().getProperty('externalSheetID');
   const externalFile = SpreadsheetApp.openById(externalSheetID);
   const externalSheet = externalFile.getSheetByName("Dispatched Report");
 
