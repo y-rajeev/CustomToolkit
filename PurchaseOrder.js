@@ -3,20 +3,26 @@ function generatePurchaseOrderPDF() {
   const sheetName = "Encasa - Purchase Order";
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
 
-  const startRow = 3;
+  const HEADER_ROW = 2;
+  const DATA_ROW = 3;
   const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
 
-  const header = sheet.getRange(startRow,4,1,5).getValues()[0];
+  const headers = sheet.getRange(HEADER_ROW, 1, 1, lastCol).getValues()[0];
+  const col = {};
+  headers.forEach((h, i) => { if (h) col[String(h).trim()] = i; });
 
-  const supplier = header[0];
-  const branch = header[1];
-  const poNumber = header[2];
-  const date = formatDate(header[3]);
-  const requiredBy = formatDate(header[4]);
+  const data = sheet.getRange(DATA_ROW, 1, lastRow - DATA_ROW + 1, lastCol).getValues();
+
+  const info = data[0];
+  const supplier = info[col["Supplier Name"]];
+  const branch = info[col["Branch"]];
+  const poNumber = info[col["Purchase Order"]];
+  const destination = info[col["Destination"]];
+  const date = formatDate(info[col["Date"]]);
+  const requiredBy = formatDate(info[col["Required By"]]);
 
   const isIGST = branch === "Karur";
-
-  const rows = sheet.getRange(startRow,10,lastRow-2,19).getValues();
 
   const items = [];
   const gstSummary = {};
@@ -26,48 +32,48 @@ function generatePurchaseOrderPDF() {
   let grandTotal = 0;
   let totalQty = 0;
 
-  rows.forEach(r => {
+  data.forEach(r => {
 
-    if (!r[0]) return;
+    if (!r[col["SKU"]]) return;
 
-    const taxable = Number(r[7]);
-    const hsn = r[8];
+    const taxable = Number(r[col["Amount"]]);
+    const hsn = r[col["HSN/SAC"]];
 
-    const igstAmt = Number(r[13]);
-    const cgstAmt = Number(r[15]);
-    const sgstAmt = Number(r[17]);
+    const igstAmt = Number(r[col["IGST Amount"]]);
+    const cgstAmt = Number(r[col["CGST Amount"]]);
+    const sgstAmt = Number(r[col["SGST Amount"]]);
 
     const gstAmount = isIGST ? igstAmt : cgstAmt + sgstAmt;
 
-    const total = Number(r[18]);
+    const total = Number(r[col["Total Amount"]]);
 
     totalTaxable += taxable;
     totalGST += gstAmount;
     grandTotal += total;
-    totalQty += Number(r[5]);
+    totalQty += Number(r[col["Quantity (Sets)"]]);
 
     items.push({
-      sku:r[0],
-      line:r[1],
-      design:r[2],
-      size:r[3],
-      pcs:r[4],
-      qty:r[5],
-      rate:fmt(r[6]),
-      amount:fmt(r[7])
+      sku: r[col["SKU"]],
+      line: r[col["Line"]],
+      design: r[col["Design"]],
+      size: r[col["Size"]],
+      pcs: r[col["Pcs/Pack"]],
+      qty: r[col["Quantity (Sets)"]],
+      rate: fmt(r[col["Rate"]]),
+      amount: fmt(r[col["Amount"]])
     });
 
-    if(!gstSummary[hsn]){
+    if (!gstSummary[hsn]) {
 
       gstSummary[hsn] = {
-        hsn:hsn,
-        taxable:0,
-        igstRate:r[12],
-        igstAmt:0,
-        cgstRate:r[14],
-        cgstAmt:0,
-        sgstRate:r[16],
-        sgstAmt:0
+        hsn: hsn,
+        taxable: 0,
+        igstRate: r[col["IGST Rate"]],
+        igstAmt: 0,
+        cgstRate: r[col["CGST Rate"]],
+        cgstAmt: 0,
+        sgstRate: r[col["SGST Rate"]],
+        sgstAmt: 0
       };
 
     }
@@ -97,13 +103,14 @@ function generatePurchaseOrderPDF() {
   template.supplier = supplier;
   template.branch = branch;
   template.poNumber = poNumber;
+  template.destination = destination;
   template.date = date;
   template.requiredBy = requiredBy;
 
   template.items = items;
   template.gstRows = gstRows;
 
-  const FIRST_PAGE = 35;
+  const FIRST_PAGE = 33;
   const OTHER_PAGES = 40;
   const pageGroups = [];
   pageGroups.push(items.slice(0, FIRST_PAGE));
@@ -111,6 +118,14 @@ function generatePurchaseOrderPDF() {
     pageGroups.push(items.slice(i, i + OTHER_PAGES));
   }
   template.pageGroups = pageGroups;
+
+  const pageOffsets = [];
+  let offset = 0;
+  for (let g = 0; g < pageGroups.length; g++) {
+    pageOffsets.push(offset);
+    offset += pageGroups[g].length;
+  }
+  template.pageOffsets = pageOffsets;
 
   template.totalTaxable = fmt(totalTaxable);
   template.totalGST = fmt(totalGST);
@@ -145,20 +160,14 @@ function formatDate(v){
 
   if(!v) return "";
 
-  if(v instanceof Date) {
-    return Utilities.formatDate(v, Session.getScriptTimeZone(), "dd-MMM-yyyy");
-  }
+  var d = (v instanceof Date) ? v : new Date(v);
 
   var str = String(v);
   var parts = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(parts){
-    return Utilities.formatDate(
-      new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])),
-      Session.getScriptTimeZone(),
-      "dd-MMM-yyyy"
-    );
-  }
+  if(parts) d = new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
 
-  return Utilities.formatDate(new Date(v), Session.getScriptTimeZone(), "dd-MMM-yyyy");
+  var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var day = d.getDate();
+  return (day < 10 ? "0" + day : day) + "-" + months[d.getMonth()] + "-" + d.getFullYear();
 
 }

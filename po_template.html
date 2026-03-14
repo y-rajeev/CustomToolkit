@@ -33,6 +33,15 @@ margin-bottom:20px;
 .info td{
 border:none;
 padding:3px;
+width:50%;
+overflow:visible;
+text-overflow:clip;
+}
+
+.info-border{
+border-bottom:1px solid #ccc;
+padding-bottom:12px;
+margin-bottom:12px;
 }
 
 table{
@@ -43,14 +52,15 @@ table-layout:fixed;
 
 /* Column widths */
 
-th:nth-child(1), td:nth-child(1){ width:18%; }
-th:nth-child(2), td:nth-child(2){ width:10%; }
-th:nth-child(3), td:nth-child(3){ width:24%; }
-th:nth-child(4), td:nth-child(4){ width:10%; }
-th:nth-child(5), td:nth-child(5){ width:6%; }
-th:nth-child(6), td:nth-child(6){ width:8%; }
-th:nth-child(7), td:nth-child(7){ width:12%; }
+th:nth-child(1), td:nth-child(1){ width:4%; }
+th:nth-child(2), td:nth-child(2){ width:20%; }
+th:nth-child(3), td:nth-child(3){ width:7%; }
+th:nth-child(4), td:nth-child(4){ width:21%; }
+th:nth-child(5), td:nth-child(5){ width:10%; }
+th:nth-child(6), td:nth-child(6){ width:6%; }
+th:nth-child(7), td:nth-child(7){ width:8%; }
 th:nth-child(8), td:nth-child(8){ width:12%; }
+th:nth-child(9), td:nth-child(9){ width:12%; }
 
 th{
 background:#f7f7f7;
@@ -171,6 +181,8 @@ margin-bottom:3px;
 Encasa Homes Pvt Ltd
 </div>
 
+<div class="info-border">
+
 <table class="info">
 
 <tr>
@@ -180,14 +192,17 @@ Encasa Homes Pvt Ltd
 
 <tr>
 <td><b>PO Number :</b> <?= poNumber ?></td>
-<td class="right"><b>Date :</b> <?= date ?></td>
+<td class="right"><b>Destination :</b> <?= destination ?></td>
 </tr>
 
 <tr>
-<td><b>Required By :</b> <?= requiredBy ?></td>
+<td><b>Date :</b> <?= date ?></td>
+<td class="right"><b>Required By :</b> <?= requiredBy ?></td>
 </tr>
 
 </table>
+
+</div>
 
 
 <? for(var p=0; p<pageGroups.length; p++){ ?>
@@ -197,6 +212,7 @@ Encasa Homes Pvt Ltd
 <thead>
 
 <tr>
+<th class="center">S.No.</th>
 <th>SKU</th>
 <th>Line</th>
 <th>Design</th>
@@ -215,6 +231,7 @@ Encasa Homes Pvt Ltd
 
 <tr>
 
+<td class="center"><?= pageOffsets[p] + i + 1 ?></td>
 <td><?= pageGroups[p][i].sku ?></td>
 <td><?= pageGroups[p][i].line ?></td>
 <td><?= pageGroups[p][i].design ?></td>
@@ -231,7 +248,7 @@ Encasa Homes Pvt Ltd
 <? if(p === pageGroups.length - 1){ ?>
 
 <tr class="total-row">
-<td colspan="5" class="right">Total (<?= totalItems ?> items)</td>
+<td colspan="6" class="right">Total (<?= totalItems ?> items)</td>
 <td class="center"><?= totalQty ?></td>
 <td></td>
 <td class="right">₹ <?= totalTaxable ?></td>
@@ -367,8 +384,7 @@ Mumbai, Maharashtra, 400013, India<br><br>
 <div class="terms-title">Payment Terms</div>
 
 <ol>
-<li>50% Advance payment along with the Purchase Order.</li>
-<li>50% Balance payment after delivery and quality inspection.</li>
+<li>50% Advance, 50% After Delivery.</li>
 </ol>
 
 </div>
