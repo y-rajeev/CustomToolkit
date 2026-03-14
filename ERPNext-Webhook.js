@@ -1,45 +1,78 @@
 // -------------------------------------------------------------------------
-// Get instant update in 'Uploaded Invoice' sheet after sales invoice submit
+// Webhook: Update 'Uploaded Invoice' sheet when Sales Invoice is submitted
 // -------------------------------------------------------------------------
 function doPost(e) {
-  // Open the spreadsheet and get the "Uploaded Invoice" sheet
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getSheetByName("Uploaded Invoice");
-  
+  var lock = LockService.getScriptLock();
+
   try {
-    // Parse the incoming JSON data
-    var invoiceData = JSON.parse(e.postData.contents);
-    
-    // Extract necessary fields from the incoming data
+    // Wait up to 30 seconds to get the lock
+    lock.waitLock(30000);
+
+    // --- Safety checks ---
+    if (!e || !e.postData || !e.postData.contents) {
+      return createResponse("error", "No POST data received");
+    }
+
+    var invoiceData;
+    try {
+      invoiceData = JSON.parse(e.postData.contents);
+    } catch (parseErr) {
+      return createResponse("error", "Invalid JSON: " + parseErr);
+    }
+
+    // Open spreadsheet & sheet
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    // Or: SpreadsheetApp.openById("SPREADSHEET_ID");
+    var sheet = spreadsheet.getSheetByName("Uploaded Invoice");
+    if (!sheet) {
+      throw new Error("Sheet 'Uploaded Invoice' not found");
+    }
+
+    // Build row data (Column A left blank)
     var newRow = [
-      invoiceData.creation,                   // Column B: doc.posting_date
-      invoiceData.vch_no,                     // Column C: doc.name
-      invoiceData.shipment_id,                // Column D: doc.custom_shipment_id
-      invoiceData.channel_abb,                // Column E: doc.custom_destination
-      invoiceData.mode,                       // Column F: doc.custom_shipment_mode
-      invoiceData.branch,                     // Column G: doc.branch
-      invoiceData.dispatch_date,              // Column H: doc.custom_shipment_date
-      invoiceData.eta_date,                   // Column I: doc.custom_eta_date
-      invoiceData.repository,                 // Column J: doc.custom_repository
-      invoiceData.status,                     // Column K: doc.custom_inbound_status
-      invoiceData.total_qty,                  // Column L: doc.total_qty
-      invoiceData.net_total,                  // Column M: doc.net_total
-      invoiceData.total_taxes_and_charges,    // Column N: doc.total_taxes_and_charges
-      invoiceData.grand_total                 // Column O: doc.grand_total
+      "",                                       // Column A
+      invoiceData.creation || "",              // Column B
+      invoiceData.vch_no || "",                // Column C
+      invoiceData.shipment_id || "",           // Column D
+      invoiceData.channel_abb || "",           // Column E
+      invoiceData.mode || "",                  // Column F
+      invoiceData.branch || "",                // Column G
+      invoiceData.dispatch_date || "",         // Column H
+      invoiceData.eta_date || "",              // Column I
+      invoiceData.repository || "",            // Column J
+      invoiceData.status || "",                // Column K
+      invoiceData.total_qty || "",             // Column L
+      invoiceData.net_total || "",             // Column M
+      invoiceData.total_taxes_and_charges || "", // Column N
+      invoiceData.grand_total || ""            // Column O
     ];
-    
-    // Determine the last row to append new data below existing data
-    var lastRow = sheet.getLastRow();
-    
-    // Set the values starting from column B
-    sheet.getRange(lastRow + 1, 2, 1, newRow.length).setValues([newRow]);
-    
-    return ContentService.createTextOutput(JSON.stringify({status: "success"}))
-                         .setMimeType(ContentService.MimeType.JSON);
-  
+
+    // Append the row to the sheet
+    sheet.appendRow(newRow);
+
+    // Success response
+    return createResponse("success", "Invoice row added");
+
   } catch (error) {
-    // Handle any errors that occur during the operation
-    return ContentService.createTextOutput(JSON.stringify({status: "error", message: error.message}))
-                         .setMimeType(ContentService.MimeType.JSON);
+    console.error(error);
+    return createResponse("error", String(error.message || error));
+
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (e2) {
+      // ignore
+    }
   }
+}
+
+// Helper: build JSON response
+function createResponse(status, message) {
+  var payload = {
+    status: status,
+    message: message
+  };
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
 }

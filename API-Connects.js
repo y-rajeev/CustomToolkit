@@ -10,9 +10,9 @@ function postItemToERPNext() {
   }
 
   const config = {
-    apiKey: PropertiesService.getScriptProperties().getProperty('API_KEY'),
-    apiSecret: PropertiesService.getScriptProperties().getProperty('API_SECRET'),
-    baseUrl: PropertiesService.getScriptProperties().getProperty('baseUrl'),
+    apiKey: PropertiesService.getScriptProperties().getProperty('ERPNext_API_KEY'),
+    apiSecret: PropertiesService.getScriptProperties().getProperty('ERPNext_API_SECRET'),
+    baseUrl: PropertiesService.getScriptProperties().getProperty('ERPNext_URL'),
     logDetails: false
   };
 
@@ -152,10 +152,10 @@ function postItemToERPNext() {
 // ------------------------------------
 
 function fetchERPItem() {
-  var apiKey = PropertiesService.getScriptProperties().getProperty('API_KEY');
-  var apiSecret = PropertiesService.getScriptProperties().getProperty('API_SECRET');
-
-  var baseUrl = PropertiesService.getScriptProperties().getProperty('baseUrl');
+  const props = PropertiesService.getScriptProperties();
+  const apiKey = props.getProperty('ERPNext_API_KEY');
+  const apiSecret = props.getProperty('ERPNext_API_SECRET');
+  const baseUrl = props.getProperty('ERPNext_URL');
   var reportName = "Item List";
 
   var headers = {

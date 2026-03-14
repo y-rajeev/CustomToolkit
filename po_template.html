@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<style>
+
+@page {
+size: A4 portrait;
+margin: 25px 25px 45px 25px;
+}
+
+body{
+font-family: Arial, sans-serif;
+font-size:11px;
+color:#333;
+}
+
+.header{
+text-align:center;
+font-size:20px;
+font-weight:600;
+margin-bottom:10px;
+}
+
+.company{
+text-align:center;
+font-size:13px;
+color:#666;
+margin-bottom:20px;
+}
+
+.info td{
+border:none;
+padding:3px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
+}
+
+/* Column widths */
+
+th:nth-child(1), td:nth-child(1){ width:18%; }
+th:nth-child(2), td:nth-child(2){ width:10%; }
+th:nth-child(3), td:nth-child(3){ width:24%; }
+th:nth-child(4), td:nth-child(4){ width:10%; }
+th:nth-child(5), td:nth-child(5){ width:6%; }
+th:nth-child(6), td:nth-child(6){ width:8%; }
+th:nth-child(7), td:nth-child(7){ width:12%; }
+th:nth-child(8), td:nth-child(8){ width:12%; }
+
+th{
+background:#f7f7f7;
+border-bottom:1px solid #ccc;
+padding:6px;
+font-weight:600;
+white-space:nowrap;
+}
+
+td{
+border-bottom:1px solid #eee;
+padding:6px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
+.right{
+text-align:right;
+font-variant-numeric: tabular-nums;
+}
+
+.center{
+text-align:center;
+}
+
+.section{
+margin-top:20px;
+page-break-before:always;
+}
+
+.totalBox{
+width:260px;
+margin-top:25px;
+margin-left:auto;
+}
+
+.totalBox td{
+border:none;
+padding:5px;
+}
+
+.totalBox tr:last-child td{
+border-top:1px solid #aaa;
+font-weight:bold;
+}
+
+.address-container{
+margin-top:50px;
+display:flex;
+justify-content:space-between;
+}
+
+.address-box{
+width:48%;
+font-size:11px;
+}
+
+.address-title{
+font-weight:bold;
+margin-bottom:6px;
+}
+
+.signature{
+margin-top:60px;
+width:200px;
+text-align:center;
+margin-left:auto;
+}
+
+.signature-line{
+border-top:1px solid #bbb;
+margin-top:60px;
+}
+
+.total-row td{
+border-top:2px solid #ccc;
+font-weight:600;
+background:#f9f9f9;
+}
+
+.page-num{
+text-align:center;
+font-size:9px;
+color:#999;
+margin-top:8px;
+}
+
+.terms{
+margin-top:30px;
+font-size:10px;
+}
+
+.terms-title{
+font-weight:bold;
+margin-bottom:6px;
+font-size:11px;
+}
+
+.terms ol{
+margin:4px 0 0 16px;
+padding:0;
+}
+
+.terms li{
+margin-bottom:3px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">PURCHASE ORDER</div>
+
+<div class="company">
+Encasa Homes Pvt Ltd
+</div>
+
+<table class="info">
+
+<tr>
+<td><b>Supplier :</b> <?= supplier ?></td>
+<td class="right"><b>Branch :</b> <?= branch ?></td>
+</tr>
+
+<tr>
+<td><b>PO Number :</b> <?= poNumber ?></td>
+<td class="right"><b>Date :</b> <?= date ?></td>
+</tr>
+
+<tr>
+<td><b>Required By :</b> <?= requiredBy ?></td>
+</tr>
+
+</table>
+
+
+<? for(var p=0; p<pageGroups.length; p++){ ?>
+
+<table>
+
+<thead>
+
+<tr>
+<th>SKU</th>
+<th>Line</th>
+<th>Design</th>
+<th>Size</th>
+<th>Pcs/Pack</th>
+<th>Qty</th>
+<th class="right">Rate</th>
+<th class="right">Amount</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<? for(var i=0;i<pageGroups[p].length;i++){ ?>
+
+<tr>
+
+<td><?= pageGroups[p][i].sku ?></td>
+<td><?= pageGroups[p][i].line ?></td>
+<td><?= pageGroups[p][i].design ?></td>
+<td><?= pageGroups[p][i].size ?></td>
+<td class="center"><?= pageGroups[p][i].pcs ?></td>
+<td class="center"><?= pageGroups[p][i].qty ?></td>
+<td class="right">₹ <?= pageGroups[p][i].rate ?></td>
+<td class="right">₹ <?= pageGroups[p][i].amount ?></td>
+
+</tr>
+
+<? } ?>
+
+<? if(p === pageGroups.length - 1){ ?>
+
+<tr class="total-row">
+<td colspan="5" class="right">Total (<?= totalItems ?> items)</td>
+<td class="center"><?= totalQty ?></td>
+<td></td>
+<td class="right">₹ <?= totalTaxable ?></td>
+</tr>
+
+<? } ?>
+
+</tbody>
+
+</table>
+
+<div class="page-num">Page <?= p+1 ?> of <?= pageGroups.length ?></div>
+
+<? if(p < pageGroups.length - 1){ ?>
+<div style="page-break-after:always;"></div>
+<? } ?>
+
+<? } ?>
+
+
+<div class="section">
+
+<b>GST Summary</b>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>HSN/SAC</th>
+<th class="right">Taxable Amount</th>
+
+<? if(isIGST){ ?>
+
+<th class="right">IGST</th>
+
+<? } else { ?>
+
+<th class="right">CGST</th>
+<th class="right">SGST</th>
+
+<? } ?>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<? for(var i=0;i<gstRows.length;i++){ ?>
+
+<tr>
+
+<td><?= gstRows[i].hsn ?></td>
+
+<td class="right">₹ <?= gstRows[i].taxable ?></td>
+
+<? if(isIGST){ ?>
+
+<td class="right">(<?= gstRows[i].igstRate ?>%) ₹ <?= gstRows[i].igstAmt ?></td>
+
+<? } else { ?>
+
+<td class="right">(<?= gstRows[i].cgstRate ?>%) ₹ <?= gstRows[i].cgstAmt ?></td>
+<td class="right">(<?= gstRows[i].sgstRate ?>%) ₹ <?= gstRows[i].sgstAmt ?></td>
+
+<? } ?>
+
+</tr>
+
+<? } ?>
+
+</tbody>
+
+</table>
+
+</div>
+
+
+<div class="totalBox">
+
+<table>
+
+<tr>
+<td>Total Taxable</td>
+<td class="right">₹ <?= totalTaxable ?></td>
+</tr>
+
+<tr>
+<td>Total GST</td>
+<td class="right">₹ <?= totalGST ?></td>
+</tr>
+
+<tr>
+<td>Grand Total</td>
+<td class="right">₹ <?= grandTotal ?></td>
+</tr>
+
+</table>
+
+</div>
+
+
+<div class="address-container">
+
+<div class="address-box">
+
+<div class="address-title">Billing Address</div>
+
+Encasa Homes Private Limited<br>
+254, 2nd Floor, A-Z Industrial Estate,<br>
+Ganpatrao Kadam Marg, Lower Parel,<br>
+Mumbai, Maharashtra, 400013, India<br><br>
+
+<b>GSTIN / UIN:</b> 27AAACA3335P2ZI
+
+</div>
+
+<div class="address-box">
+
+<div class="address-title">Shipping Address</div>
+
+&nbsp;
+
+</div>
+
+</div>
+
+
+<div class="terms">
+
+<div class="terms-title">Payment Terms</div>
+
+<ol>
+<li>50% Advance payment along with the Purchase Order.</li>
+<li>50% Balance payment after delivery and quality inspection.</li>
+</ol>
+
+</div>
+
+
+<div class="signature">
+
+<div class="signature-line"></div>
+Authorized Signature
+
+</div>
+
+
+</body>
+</html>

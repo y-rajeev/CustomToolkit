@@ -6,23 +6,20 @@ function onOpen() {
         .addItem('Export Sales Order', 'openDialogForSalesOrder')
         .addItem('Export Sales Invoice', 'openDialogForSalesInvoice')
         .addItem('Export Auto Invoicing', 'openDialogForAutoInvoicing')
-        .addItem('Export Purchase Order', 'openDialogForPurchaseOrder')
-        .addItem('Export Purchase Invoice', 'openDialogForPurchaseInvoice')
-        .addItem('Export Delivery Note', 'openDialogForDeliveryNote')
         .addItem('Export Schedule Template', 'openDialogForScheduleTemplate')
         .addItem('Export Stock Entry', 'openDialogForStockEntry')
         .addItem('Export Price List', 'openDialogForPriceList')
         .addToUi();
 
     ui.createMenu('ERP Sync')
-        .addItem('Get Items', 'fetchERPItem')
-        .addItem('Sync FNSKU', 'importFNSKUMapping')
+        .addItem('Sync Items', 'fetchERPItem')
+        .addItem('Sync Shipment', 'fetchUploadedShipment')
         .addItem('Push Item', 'postItemToERPNext')
         .addToUi();
 
-    ui.createMenu('Sheet Sync')
-        .addItem('Refresh Order Ledger', 'importSpecificColumns')
-        .addToUi();
+    // ui.createMenu('Sheet Sync')
+    //     .addItem('Refresh Order Ledger', 'importSpecificColumns')
+    //     .addToUi();
 }
 
 function openDialogForNewItemTemplate() {
@@ -37,17 +34,6 @@ function openDialogForSalesInvoice() {
     openDialog('ERP Import - Sales Invoice');
 }
 
-function openDialogForPurchaseOrder() {
-    openDialog('ERP import - Purchase Order');
-}
-
-function openDialogForPurchaseInvoice() {
-    openDialog('ERP import - Purchase Invoice');
-}
-
-function openDialogForDeliveryNote() {
-    openDialog('ERP import - Delivery Note');
-}
 
 function openDialogForScheduleTemplate() {
     openDialog('Amazon - Schedule Template');
@@ -152,17 +138,6 @@ function exportToCSV(sheetName, filename) {
 }
 // -----------------------------------------------------Exporting End --------------------------------------------------------
 
-// Clear the data in the "ERP import - Purchase Order" sheet
-function clearDataInPurchaseOrder() {
-    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = spreadsheet.getSheetByName("ERP import - Purchase Order");
-    if (sheet) {
-      // Define the range to clear
-      var range = sheet.getRange("B2:V200");
-      range.clearContent();
-    }
-}
-
 // Clear the data in the "Order Formatter" sheet
 function clearDataInOrderReview() {
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -172,17 +147,6 @@ function clearDataInOrderReview() {
       var range = sheet.getRange("A3:E");
       range.clearContent();
     }
-}
-
-// Clear the data in the "Tally Invoice - Input" sheet
-function clearDataInTallyImport_Invoice() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getSheetByName("Tally Invoice - Input");
-  if (sheet) {
-    // Define the range to clear
-    var range = sheet.getRange("A3:AX");
-    range.clearContent();
-  }
 }
 
 // Clear the data in the "ERP Import - Sales Invoice" sheet, excluding column AX:BA
@@ -237,42 +201,6 @@ function deleteRangeAndShiftUp() {
   }
 }
 
-// Costum action
-function performActions() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var tallySheet = ss.getSheetByName("Tally Invoice - Input");
-  var refSheet = ss.getSheetByName("auto_calls");
-  
-  // Step 1: Copy G3:G and paste as values in the same location
-  var rangeToCopy = tallySheet.getRange("A3:AX");
-  var values = rangeToCopy.getValues();
-  rangeToCopy.setValues(values);
-  
-  // Step 2: Copy AT1 and AX1 from auto_calls and paste in H1 and J1 in Tally Invoice - Input
-  var refAT1 = refSheet.getRange("C1").getValue();
-  var refAX1 = refSheet.getRange("G1").getValue();
-  
-  tallySheet.getRange("N1").setValue(refAT1);
-  tallySheet.getRange("O1").setValue(refAX1);
-}
-/*
-// Apply Dynamic Formula Based On Column I In 'ERP Import - Sales Invoice'
-function checkI1AndRun() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ERP Import - Sales Invoice');
-  if (!sheet) {
-    Logger.log("ERP Import - Sales Invoice not found!");
-    return;
-  }
-
-  var cellH1 = sheet.getRange('H1').getValue(); // Get value from H1
-  var markerCell = sheet.getRange('I1').getValue(); // Marker cell to prevent repeated triggers
-
-  if (cellH1 === "OK" && markerCell !== "Processed") {
-    applyDynamicFormulaBasedOnColumnI(); // Call function
-    sheet.getRange('I1').setValue("Processed"); // Set marker to prevent reprocessing
-  }
-}
-*/
 function applyDynamicFormulaBasedOnColumnI() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ERP Import - Sales Invoice');
   if (!sheet) {
@@ -328,29 +256,6 @@ function applyDynamicFormulaInAutoInvoicing() {
       sheet.getRange(rowIndex, fixedColIndexAuto + 1).setFormula(formula);
     } else {
       sheet.getRange(rowIndex, fixedColIndexAuto + 1).clearContent();
-    }
-  }
-}
-
-function applyDynamicFormulaBasedOnColumnAQ() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ERP import - Purchase Invoice');
-  if (!sheet) {
-    Logger.log("ERP import - Purchase Invoice not found");
-    return;
-  }
-
-  var lastRow = sheet.getLastRow(); // Get the last row with data
-  var rangeAZ = sheet.getRange(3, 52, lastRow - 2, 1).getValues(); // Get values from AZ3:AZ
-
-  for (var i = 0; i < rangeAZ.length; i++) {
-    var rowIndex = i + 3; // Adjust for the row index (starting from row 3)
-    var valueAZ = rangeAZ[i][0]; // Get the value from column AZ
-
-    if (valueAZ !== "") { // Check if the cell in column AZ contains any text
-      var formula = '=ARRAYFORMULA(IF(AZ' + rowIndex + '="In-State",FBA_Ref_Sheet!E17:E18,IF(AZ' + rowIndex + '="Out-State",FBA_Ref_Sheet!E21, "")))';
-      sheet.getRange(rowIndex, 42).setFormula(formula);
-    } else {
-      sheet.getRange(rowIndex, 42).clearContent();
     }
   }
 }
