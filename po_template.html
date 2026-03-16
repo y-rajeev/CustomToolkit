@@ -169,6 +169,21 @@ padding:0;
 margin-bottom:3px;
 }
 
+.payment-summary{
+margin-top:10px;
+font-size:10px;
+}
+
+.payment-summary table{
+width:auto;
+margin-top:4px;
+}
+
+.payment-summary td{
+border:none;
+padding:2px 4px;
+}
+
 </style>
 
 </head>
@@ -386,6 +401,20 @@ Mumbai, Maharashtra, 400013, India<br><br>
 <ol>
 <li>50% Advance, 50% After Delivery.</li>
 </ol>
+
+<div class="payment-summary">
+Advance / Balance Summary:
+<table>
+<tr>
+<td>50% Advance</td>
+<td class="right">₹ <?= advanceAmount ?></td>
+</tr>
+<tr>
+<td>50% Balance</td>
+<td class="right">₹ <?= balanceAmount ?></td>
+</tr>
+</table>
+</div>
 
 </div>
 

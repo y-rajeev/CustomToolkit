@@ -131,6 +131,11 @@ function generatePurchaseOrderPDF() {
   template.totalGST = fmt(totalGST);
   template.grandTotal = fmt(grandTotal);
 
+  const advance = grandTotal * 0.5;
+  const balance = grandTotal - advance;
+  template.advanceAmount = fmt(advance);
+  template.balanceAmount = fmt(balance);
+
   template.isIGST = isIGST;
   template.totalQty = totalQty;
   template.totalItems = items.length;
