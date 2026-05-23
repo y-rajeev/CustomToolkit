@@ -14,143 +14,155 @@ function generatePurchaseOrderPDF() {
 
   const data = sheet.getRange(DATA_ROW, 1, lastRow - DATA_ROW + 1, lastCol).getValues();
 
-  const info = data[0];
-  const supplier = info[col["Supplier Name"]];
-  const branch = info[col["Branch"]];
-  const poNumber = info[col["Purchase Order"]];
-  const destination = info[col["Destination"]];
-  const date = formatDate(info[col["Date"]]);
-  const requiredBy = formatDate(info[col["Required By"]]);
-
-  const isIGST = branch === "Karur";
-
-  const items = [];
-  const gstSummary = {};
-
-  let totalTaxable = 0;
-  let totalGST = 0;
-  let grandTotal = 0;
-  let totalQty = 0;
-
+  // Group rows by purchase order number (column can be anywhere, we use the header)
+  const orders = {};
   data.forEach(r => {
-
-    if (!r[col["SKU"]]) return;
-
-    const taxable = Number(r[col["Amount"]]);
-    const hsn = r[col["HSN/SAC"]];
-
-    const igstAmt = Number(r[col["IGST Amount"]]);
-    const cgstAmt = Number(r[col["CGST Amount"]]);
-    const sgstAmt = Number(r[col["SGST Amount"]]);
-
-    const gstAmount = isIGST ? igstAmt : cgstAmt + sgstAmt;
-
-    const total = Number(r[col["Total Amount"]]);
-
-    totalTaxable += taxable;
-    totalGST += gstAmount;
-    grandTotal += total;
-    totalQty += Number(r[col["Quantity (Sets)"]]);
-
-    items.push({
-      sku: r[col["SKU"]],
-      line: r[col["Line"]],
-      design: r[col["Design"]],
-      size: r[col["Size"]],
-      pcs: r[col["Pcs/Pack"]],
-      qty: r[col["Quantity (Sets)"]],
-      rate: fmt(r[col["Rate"]]),
-      amount: fmt(r[col["Amount"]])
-    });
-
-    if (!gstSummary[hsn]) {
-
-      gstSummary[hsn] = {
-        hsn: hsn,
-        taxable: 0,
-        igstRate: r[col["IGST Rate"]],
-        igstAmt: 0,
-        cgstRate: r[col["CGST Rate"]],
-        cgstAmt: 0,
-        sgstRate: r[col["SGST Rate"]],
-        sgstAmt: 0
-      };
-
-    }
-
-    gstSummary[hsn].taxable += taxable;
-    gstSummary[hsn].igstAmt += igstAmt;
-    gstSummary[hsn].cgstAmt += cgstAmt;
-    gstSummary[hsn].sgstAmt += sgstAmt;
-
+    const po = r[col["Purchase Order"]];
+    if (!po) return;
+    if (!orders[po]) orders[po] = [];
+    orders[po].push(r);
   });
-
-  const gstRows = Object.values(gstSummary).map(x=>({
-
-    hsn:x.hsn,
-    taxable:fmt(x.taxable),
-    igstRate:x.igstRate,
-    igstAmt:fmt(x.igstAmt),
-    cgstRate:x.cgstRate,
-    cgstAmt:fmt(x.cgstAmt),
-    sgstRate:x.sgstRate,
-    sgstAmt:fmt(x.sgstAmt)
-
-  }));
-
-  const template = HtmlService.createTemplateFromFile("po_template");
-
-  template.supplier = supplier;
-  template.branch = branch;
-  template.poNumber = poNumber;
-  template.destination = destination;
-  template.date = date;
-  template.requiredBy = requiredBy;
-
-  template.items = items;
-  template.gstRows = gstRows;
 
   const FIRST_PAGE = 33;
   const OTHER_PAGES = 40;
-  const pageGroups = [];
-  pageGroups.push(items.slice(0, FIRST_PAGE));
-  for (let i = FIRST_PAGE; i < items.length; i += OTHER_PAGES) {
-    pageGroups.push(items.slice(i, i + OTHER_PAGES));
-  }
-  template.pageGroups = pageGroups;
-
-  const pageOffsets = [];
-  let offset = 0;
-  for (let g = 0; g < pageGroups.length; g++) {
-    pageOffsets.push(offset);
-    offset += pageGroups[g].length;
-  }
-  template.pageOffsets = pageOffsets;
-
-  template.totalTaxable = fmt(totalTaxable);
-  template.totalGST = fmt(totalGST);
-  template.grandTotal = fmt(grandTotal);
-
-  const advance = grandTotal * 0.5;
-  const balance = grandTotal - advance;
-  template.advanceAmount = fmt(advance);
-  template.balanceAmount = fmt(balance);
-
-  template.isIGST = isIGST;
-  template.totalQty = totalQty;
-  template.totalItems = items.length;
-
-  const html = template.evaluate().getContent();
-
-  const blob = Utilities.newBlob(html,"text/html").getAs("application/pdf");
-
   const folder = DriveApp.getFolderById("1kW1Tp_ZkV24HS6gu2BRI0Hcj97oBSbYH");
-  const fileName = `PO_${poNumber}.pdf`;
 
-  const existing = folder.getFilesByName(fileName);
-  while(existing.hasNext()) existing.next().setTrashed(true);
+  Object.keys(orders).forEach(poNumber => {
 
-  folder.createFile(blob.setName(fileName));
+    const rows = orders[poNumber];
+    const info = rows[0];
+
+    const supplier = info[col["Supplier Name"]];
+    const branch = info[col["Branch"]];
+    const destination = info[col["Destination"]];
+    const date = formatDate(info[col["Date"]]);
+    const requiredBy = formatDate(info[col["Required By"]]);
+
+    const isIGST = branch === "Karur";
+
+    const items = [];
+    const gstSummary = {};
+
+    let totalTaxable = 0;
+    let totalGST = 0;
+    let grandTotal = 0;
+    let totalQty = 0;
+
+    rows.forEach(r => {
+
+      if (!r[col["SKU"]]) return;
+
+      const taxable = Number(r[col["Amount"]]);
+      const hsn = r[col["HSN/SAC"]];
+
+      const igstAmt = Number(r[col["IGST Amount"]]);
+      const cgstAmt = Number(r[col["CGST Amount"]]);
+      const sgstAmt = Number(r[col["SGST Amount"]]);
+
+      const gstAmount = isIGST ? igstAmt : cgstAmt + sgstAmt;
+
+      const total = Number(r[col["Total Amount"]]);
+
+      totalTaxable += taxable;
+      totalGST += gstAmount;
+      grandTotal += total;
+      totalQty += Number(r[col["Quantity (Sets)"]]);
+
+      items.push({
+        sku: r[col["SKU"]],
+        line: r[col["Line"]],
+        design: r[col["Design"]],
+        size: r[col["Size"]],
+        pcs: r[col["Pcs/Pack"]],
+        qty: r[col["Quantity (Sets)"]],
+        rate: fmt(r[col["Rate"]]),
+        amount: fmt(r[col["Amount"]])
+      });
+
+      if (!gstSummary[hsn]) {
+
+        gstSummary[hsn] = {
+          hsn: hsn,
+          taxable: 0,
+          igstRate: r[col["IGST Rate"]],
+          igstAmt: 0,
+          cgstRate: r[col["CGST Rate"]],
+          cgstAmt: 0,
+          sgstRate: r[col["SGST Rate"]],
+          sgstAmt: 0
+        };
+
+      }
+
+      gstSummary[hsn].taxable += taxable;
+      gstSummary[hsn].igstAmt += igstAmt;
+      gstSummary[hsn].cgstAmt += cgstAmt;
+      gstSummary[hsn].sgstAmt += sgstAmt;
+
+    });
+
+    const gstRows = Object.values(gstSummary).map(x=>({
+
+      hsn:x.hsn,
+      taxable:fmt(x.taxable),
+      igstRate:x.igstRate,
+      igstAmt:fmt(x.igstAmt),
+      cgstRate:x.cgstRate,
+      cgstAmt:fmt(x.cgstAmt),
+      sgstRate:x.sgstRate,
+      sgstAmt:fmt(x.sgstAmt)
+
+    }));
+
+    const template = HtmlService.createTemplateFromFile("po_template");
+
+    template.supplier = supplier;
+    template.branch = branch;
+    template.poNumber = poNumber;
+    template.destination = destination;
+    template.date = date;
+    template.requiredBy = requiredBy;
+
+    template.items = items;
+    template.gstRows = gstRows;
+
+    const pageGroups = [];
+    pageGroups.push(items.slice(0, FIRST_PAGE));
+    for (let i = FIRST_PAGE; i < items.length; i += OTHER_PAGES) {
+      pageGroups.push(items.slice(i, i + OTHER_PAGES));
+    }
+    template.pageGroups = pageGroups;
+
+    const pageOffsets = [];
+    let offset = 0;
+    for (let g = 0; g < pageGroups.length; g++) {
+      pageOffsets.push(offset);
+      offset += pageGroups[g].length;
+    }
+    template.pageOffsets = pageOffsets;
+
+    template.totalTaxable = fmt(totalTaxable);
+    template.totalGST = fmt(totalGST);
+    template.grandTotal = fmt(grandTotal);
+
+    const advance = grandTotal * 0.5;
+    const balance = grandTotal - advance;
+    template.advanceAmount = fmt(advance);
+    template.balanceAmount = fmt(balance);
+
+    template.isIGST = isIGST;
+    template.totalQty = totalQty;
+    template.totalItems = items.length;
+
+    const html = template.evaluate().getContent();
+    const blob = Utilities.newBlob(html,"text/html").getAs("application/pdf");
+
+    const fileName = `PO_${poNumber}.pdf`;
+    const existing = folder.getFilesByName(fileName);
+    while(existing.hasNext()) existing.next().setTrashed(true);
+    folder.createFile(blob.setName(fileName));
+
+  });
 
 }
 

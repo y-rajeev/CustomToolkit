@@ -184,6 +184,18 @@ border:none;
 padding:2px 4px;
 }
 
+.total-amount{
+overflow:visible;
+text-overflow:clip;
+white-space:nowrap;
+}
+
+.total-label{
+overflow:visible;
+text-overflow:clip;
+white-space:nowrap;
+}
+
 </style>
 
 </head>
@@ -266,7 +278,7 @@ Encasa Homes Pvt Ltd
 <td colspan="6" class="right">Total (<?= totalItems ?> items)</td>
 <td class="center"><?= totalQty ?></td>
 <td></td>
-<td class="right">₹ <?= totalTaxable ?></td>
+<td class="right total-amount">₹ <?= totalTaxable ?></td>
 </tr>
 
 <? } ?>
@@ -349,18 +361,18 @@ Encasa Homes Pvt Ltd
 <table>
 
 <tr>
-<td>Total Taxable</td>
-<td class="right">₹ <?= totalTaxable ?></td>
+<td class="total-label">Total Taxable</td>
+<td class="right total-amount">₹ <?= totalTaxable ?></td>
 </tr>
 
 <tr>
-<td>Total GST</td>
-<td class="right">₹ <?= totalGST ?></td>
+<td class="total-label">Total GST</td>
+<td class="right total-amount">₹ <?= totalGST ?></td>
 </tr>
 
 <tr>
-<td>Grand Total</td>
-<td class="right">₹ <?= grandTotal ?></td>
+<td class="total-label">Grand Total</td>
+<td class="right total-amount">₹ <?= grandTotal ?></td>
 </tr>
 
 </table>
