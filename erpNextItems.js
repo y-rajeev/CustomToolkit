@@ -20,6 +20,10 @@ function postItemToERPNext() {
     Logger.log("Error: API credentials not found in Script Properties");
     return;
   }
+  if (!config.baseUrl) {
+    Logger.log("Error: ERPNext_URL not found in Script Properties");
+    return;
+  }
 
   // Determine the range dynamically
   var lastRow = sheet.getLastRow();
@@ -48,9 +52,9 @@ function postItemToERPNext() {
   var allData = sheet.getRange(3, 1, lastRow - 2, lastCol).getValues();
   
   // Filter out completely empty rows
-  var data = allData.filter(row => {
-    return row.some(cell => cell !== "" && cell !== null);
-  });
+  var data = allData
+    .map((row, index) => ({ row: row, rowNumber: index + 3 }))
+    .filter(record => record.row.some(cell => cell !== "" && cell !== null));
   
   if (data.length === 0) {
     Logger.log("No valid data rows found to process");
@@ -60,8 +64,9 @@ function postItemToERPNext() {
   Logger.log(`Found ${data.length} valid rows to process`);
 
   // Process each non-empty row
-  data.forEach((row, index) => {
-    var actualRowNumber = allData.findIndex(r => r.every((cell, i) => cell === row[i])) + 3;
+  data.forEach(record => {
+    var row = record.row;
+    var actualRowNumber = record.rowNumber;
     
     // Build payload object from headers and row data
     var payload = {};
@@ -164,6 +169,9 @@ function fetchERPItem() {
   };
 
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Item List");
+  if (!sheet) {
+    throw new Error('Sheet "Item List" not found');
+  }
 
   // Fetch the last fetch timestamp from script properties (if available)
   var lastFetchTimestamp = PropertiesService.getScriptProperties().getProperty('last_fetch_timestamp');
@@ -213,6 +221,8 @@ function fetchERPItem() {
         row.item_group,
         row.quality,
         row.stock_uom,
+        row.purchase_uom,
+        row.sales_uom,
         row.gst_hsn_code,
         row.item_tax_template,
         row.is_purchase_item,
@@ -222,8 +232,8 @@ function fetchERPItem() {
       ];
     });
 
-    // Get the last row with actual content (ignoring any empty rows)
-    var lastRow = sheet.getRange("B:B").getValues().filter(String).length;
+    // Append after the last used row instead of reading the entire column.
+    var lastRow = sheet.getLastRow();
 
     // Append the filtered rows starting directly after the last row with data
     if (displayRows.length > 0) {
@@ -236,12 +246,4 @@ function fetchERPItem() {
   } else {
     Logger.log("Unable to fetch data. Response code: " + response.getResponseCode());
   }
-}
-
-// Function to get the current timestamp in IST
-function getCurrentISTTimestamp() {
-  var now = new Date(); // Current UTC time
-  var istOffset = 5.5 * 60 * 60 * 1000; // IST offset in milliseconds (UTC + 5:30)
-  var istTime = new Date(now.getTime() + istOffset);
-  return istTime.toISOString().replace('T', ' ').replace('Z', '');
 }

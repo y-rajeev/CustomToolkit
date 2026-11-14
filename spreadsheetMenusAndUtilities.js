@@ -6,7 +6,6 @@ function onOpen() {
         .addItem('Export Sales Order', 'openDialogForSalesOrder')
         .addItem('Export Sales Invoice', 'openDialogForSalesInvoice')
         .addItem('Export Auto Invoicing', 'openDialogForAutoInvoicing')
-        .addItem('Export Schedule Template', 'openDialogForScheduleTemplate')
         .addItem('Export Stock Entry', 'openDialogForStockEntry')
         .addItem('Export Price List', 'openDialogForPriceList')
         .addToUi();
@@ -17,9 +16,10 @@ function onOpen() {
         .addItem('Push Item', 'postItemToERPNext')
         .addToUi();
 
-    // ui.createMenu('Sheet Sync')
-    //     .addItem('Refresh Order Ledger', 'importSpecificColumns')
-    //     .addToUi();
+    ui.createMenu('BOM Tools')
+        .addItem('Generate BOM Uploader', 'generateBOMUploader')
+        .addToUi();
+
 }
 
 function openDialogForNewItemTemplate() {
@@ -35,10 +35,6 @@ function openDialogForSalesInvoice() {
 }
 
 
-function openDialogForScheduleTemplate() {
-    openDialog('Amazon - Schedule Template');
-}
-
 function openDialogForStockEntry() {
   openDialog('Stock Entry');
 }
@@ -51,10 +47,10 @@ function openDialogForPriceList() {
   openDialog('erp_price_list');
 }
 
-// Open a modal dialog with a custom title and content from 'Download.html'
+// Open a modal dialog with a custom title and content from exportDialog.html.
 function openDialog(sheetName) {
     // Create HTML output for the dialog
-    var html = HtmlService.createHtmlOutputFromFile('Download')
+    var html = HtmlService.createHtmlOutputFromFile('exportDialog')
         .setWidth(300)
         .setHeight(150);
     
@@ -149,14 +145,13 @@ function clearDataInOrderReview() {
     }
 }
 
-// Clear the data in the "ERP Import - Sales Invoice" sheet, excluding column AX:BA
+// Clear invoice data while preserving the AX:BA helper columns.
 function clearDataInERPImport_SalesInvoice() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getSheetByName("ERP Import - Sales Invoice");
   if (sheet) {
-    // Define the range to clear, excluding column AX & AY
-    var rangeToClearBeforeAX = sheet.getRange("A3:CB");
-    rangeToClearBeforeAX.clearContent();
+    sheet.getRange("A3:AW").clearContent();
+    sheet.getRange("BB3:CB").clearContent();
   }
 }
 
@@ -202,60 +197,43 @@ function deleteRangeAndShiftUp() {
 }
 
 function applyDynamicFormulaBasedOnColumnI() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ERP Import - Sales Invoice');
-  if (!sheet) {
-    Logger.log("ERP Import - Sales Invoice not found!");
-    return;
-  }
-
-  var sheetData = sheet.getDataRange().getValues();
-  var sheetDataHeader = sheetData[1];
-  var fixedColIndex = sheetDataHeader.indexOf("Account Head (Sales Taxes and Charges)");
-  var taxCategoryColIndexManual = sheetDataHeader.indexOf("Tax Category");
-  var lastRow = sheet.getLastRow();
-  var rangeI = sheet.getRange(3, 12, lastRow - 2, 1).getValues();
-
-  for (var i = 0; i < rangeI.length; i++) {
-    var rowIndex = i + 3;
-    var valueI = rangeI[i][0];
-
-    if (valueI !== "") {
-      var formula = `=ARRAYFORMULA(IF(R${rowIndex}C${taxCategoryColIndexManual + 1}="In-State",fixed_data!B3:B4,IF(R${rowIndex}C${taxCategoryColIndexManual + 1}="Out-State",fixed_data!B7, "")))`;
-      sheet.getRange(rowIndex, fixedColIndex + 1).setFormula(formula);
-    } else {
-      sheet.getRange(rowIndex, fixedColIndex + 1).clearContent();
-    }
-  }
+  applyTaxAccountHeadFormula_('ERP Import - Sales Invoice', 2, 3);
 }
 
 function applyDynamicFormulaInAutoInvoicing() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Auto Invoicing');
+  applyTaxAccountHeadFormula_('Auto Invoicing', 3, 4);
+}
+
+function applyTaxAccountHeadFormula_(sheetName, headerRow, firstDataRow) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
-    Logger.log("Auto Invoicing not found!");
+    Logger.log(sheetName + " not found!");
     return;
   }
 
-  var sheetDataAuto = sheet.getDataRange().getValues();
-  var sheetDataHeaderAuto = sheetDataAuto[2];
-  var fixedColIndexAuto = sheetDataHeaderAuto.indexOf("Account Head (Sales Taxes and Charges)");
-  var taxCategoryColIndex = sheetDataHeaderAuto.indexOf("Tax Category");
+  var headers = sheet.getRange(headerRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var accountHeadColumn = headers.indexOf("Account Head (Sales Taxes and Charges)");
+  var taxCategoryColumn = headers.indexOf("Tax Category");
   var lastRow = sheet.getLastRow();
-  var rangeI = sheet.getRange(4, 12, lastRow - 2, 1).getValues();
 
-  if (fixedColIndexAuto === 0) {
-    Logger.log("Column 'Account Head (Sales Taxes and Charges)' not found.");
+  if (accountHeadColumn < 0 || taxCategoryColumn < 0) {
+    Logger.log("Required tax columns not found in " + sheetName + ".");
     return;
   }
 
-  for (var i = 0; i < rangeI.length; i++) {
-    var rowIndex = i + 4;
-    var valueI = rangeI[i][0];
+  if (lastRow < firstDataRow) return;
 
-    if (valueI !== "") {
-      var formula = `=ARRAYFORMULA(IF(R${rowIndex}C${taxCategoryColIndex + 1}="In-State",fixed_data!B3:B4,IF(R${rowIndex}C${taxCategoryColIndex + 1}="Out-State",fixed_data!B7,"")))`;
-      sheet.getRange(rowIndex, fixedColIndexAuto + 1).setFormula(formula);
+  var inputValues = sheet.getRange(firstDataRow, 12, lastRow - firstDataRow + 1, 1).getValues();
+  for (var i = 0; i < inputValues.length; i++) {
+    var rowIndex = firstDataRow + i;
+    var accountHeadCell = sheet.getRange(rowIndex, accountHeadColumn + 1);
+
+    if (inputValues[i][0] !== "") {
+      var taxCategoryRef = `R${rowIndex}C${taxCategoryColumn + 1}`;
+      var formula = `=ARRAYFORMULA(IF(${taxCategoryRef}="In-State",fixed_data!B3:B4,IF(${taxCategoryRef}="Out-State",fixed_data!B7,"")))`;
+      accountHeadCell.setFormulaR1C1(formula);
     } else {
-      sheet.getRange(rowIndex, fixedColIndexAuto + 1).clearContent();
+      accountHeadCell.clearContent();
     }
   }
 }

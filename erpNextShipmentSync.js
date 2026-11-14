@@ -83,29 +83,11 @@ function fetchUploadedShipment() {
     ];
   });
 
-  var lastRow = sheet
-    .getRange('B:B')
-    .getValues()
-    .filter(function(r) {
-      return r[0] !== '';
-    }).length;
+  var lastRow = sheet.getLastRow();
 
   sheet
     .getRange(lastRow + 1, 2, displayRows.length, displayRows[0].length)
     .setValues(displayRows);
 
   props.setProperty('last_synced_at', getCurrentISTTimestamp());
-}
-
-// --------------------------------------
-// Utility: IST Timestamp
-// --------------------------------------
-
-function getCurrentISTTimestamp() {
-  var now = new Date();
-  var istOffset = 5.5 * 60 * 60 * 1000;
-  return new Date(now.getTime() + istOffset)
-    .toISOString()
-    .replace('T', ' ')
-    .replace('Z', '');
 }

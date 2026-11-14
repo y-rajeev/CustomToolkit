@@ -86,14 +86,6 @@
         }
       }).exportToCSV(sheetName, filename);
     }
-
-    // Set the hidden sheet name field value when the document is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      var sheetName = document.getElementById('sheetName').value;
-      if (sheetName) {
-        document.getElementById('sheetName').value = sheetName;
-      }
-    });
   </script>
 </body>
 </html>

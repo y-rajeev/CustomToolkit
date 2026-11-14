@@ -20,9 +20,9 @@ function deleteSheets() {
   manipulateSheets({
     conditionIndex: 1,
     action: (ss, sheetName) => {
-      if (PROTECTED_SHEETS.includes(sheetName)) throw `Cannot delete protected sheet: ${sheetName}`;
+      if (PROTECTED_SHEETS.includes(sheetName)) throw new Error(`Cannot delete protected sheet: ${sheetName}`);
       const sheet = ss.getSheetByName(sheetName);
-      if (!sheet) throw `Sheet not found: ${sheetName}`;
+      if (!sheet) throw new Error(`Sheet not found: ${sheetName}`);
       ss.deleteSheet(sheet);
     },
     resultText: name => `Deleted ${name}`
@@ -34,9 +34,9 @@ function copySheets() {
     conditionIndex: 2,
     action: (ss, sheetName, row) => {
       const targetId = row[3];
-      if (!targetId) throw "Missing destination Sheet ID in Column D.";
+      if (!targetId) throw new Error("Missing destination Sheet ID in Column D.");
       const sheet = ss.getSheetByName(sheetName);
-      if (!sheet) throw `Sheet not found: ${sheetName}`;
+      if (!sheet) throw new Error(`Sheet not found: ${sheetName}`);
       const targetSS = SpreadsheetApp.openById(targetId);
       const copied = sheet.copyTo(targetSS);
       copied.setName(sheetName + " - Copy " + new Date().toISOString().slice(0, 10));
@@ -50,13 +50,13 @@ function moveSheets() {
     conditionIndex: 4,
     action: (ss, sheetName, row) => {
       const targetId = row[5];
-      if (!targetId) throw "Missing destination Sheet ID in Column F.";
+      if (!targetId) throw new Error("Missing destination Sheet ID in Column F.");
+      if (PROTECTED_SHEETS.includes(sheetName)) throw new Error(`Cannot delete protected sheet: ${sheetName}`);
       const sheet = ss.getSheetByName(sheetName);
-      if (!sheet) throw `Sheet not found: ${sheetName}`;
+      if (!sheet) throw new Error(`Sheet not found: ${sheetName}`);
       const targetSS = SpreadsheetApp.openById(targetId);
       const copied = sheet.copyTo(targetSS);
       copied.setName(sheetName + " - Moved " + new Date().toISOString().slice(0, 10));
-      if (PROTECTED_SHEETS.includes(sheetName)) throw `Cannot delete protected sheet: ${sheetName}`;
       ss.deleteSheet(sheet);
     },
     resultText: name => `Moved ${name}`
@@ -68,10 +68,10 @@ function renameSheets() {
     conditionIndex: 6,
     action: (ss, sheetName, row) => {
       const newName = row[7];
-      if (!newName) throw "Missing new name in Column H.";
+      if (!newName) throw new Error("Missing new name in Column H.");
       const sheet = ss.getSheetByName(sheetName);
-      if (!sheet) throw `Sheet not found: ${sheetName}`;
-      if (PROTECTED_SHEETS.includes(sheetName)) throw `Cannot rename protected sheet: ${sheetName}`;
+      if (!sheet) throw new Error(`Sheet not found: ${sheetName}`);
+      if (PROTECTED_SHEETS.includes(sheetName)) throw new Error(`Cannot rename protected sheet: ${sheetName}`);
       sheet.setName(newName);
     },
     resultText: (name, row) => `Renamed ${name} to ${row[7]}`
@@ -83,7 +83,9 @@ function manipulateSheets({ conditionIndex, action, resultText }) {
   const sheet = ss.getSheetByName(SHEET_MANIPULATOR_NAME);
   const range = sheet.getRange("A4:J");
   const values = range.getValues();
-  const rowCount = values.filter(row => row[0]).length;
+  const rowCount = values.reduce((lastIndex, row, index) => row[0] ? index + 1 : lastIndex, 0);
+
+  if (rowCount === 0) return;
 
   for (let i = 0; i < rowCount; i++) {
     const row = values[i];

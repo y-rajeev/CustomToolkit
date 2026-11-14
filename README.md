@@ -1,63 +1,47 @@
-# CustomToolkit for Google Sheets & ERPNext Integration
+# CustomToolkit
 
-## Overview
-CustomToolkit is a collection of Google Apps Script modules designed to automate and streamline data workflows between Google Sheets, ERPNext, Supabase, and email-based CSV imports. It provides tools for exporting/importing data, syncing with ERPNext, managing Google Sheets, and more.
+Google Apps Script tools for Google Sheets workflows, ERPNext synchronization, and spreadsheet administration.
 
-## Features
-- **ERPNext Integration:**
-  - Post items to ERPNext from Google Sheets
-  - Fetch item lists and update Google Sheets
-  - Password-based and token-based API support
-- **Supabase Integration:**
-  - Push shipment and SKU data to Supabase tables
-- **Email CSV Import:**
-  - Automatically import CSV attachments from Gmail into Sheets
-- **Sheet Management:**
-  - List, copy, move, rename, and delete sheets in bulk
-- **Custom Export Dialogs:**
-  - Export various templates and reports as CSV via a user-friendly dialog
-- **Status Sync:**
-  - Update shipment statuses from external sources
-- **Backup & Utilities:**
-  - Backup sheets to Google Drive
-  - Apply dynamic formulas and clear data ranges
+## Modules
 
-## Setup Instructions
-1. **Clone or Download the Repository**
-2. **Install clasp (if not already):**
-   ```
-   npm install -g @google/clasp
-   ```
-3. **Login to clasp:**
-   ```
-   clasp login
-   ```
-4. **Push to Google Apps Script:**
-   ```
-   clasp push
-   ```
-5. **Set Script Properties:**
-   - In the Apps Script editor, go to `Project Settings` > `Script Properties` and add all required API keys, secrets, URLs, and IDs (e.g., `API_KEY`, `API_SECRET`, `baseUrl`, etc.).
-   - **Do NOT store secrets in code.**
+| File | Purpose |
+| --- | --- |
+| `spreadsheetMenusAndUtilities.js` | Spreadsheet menus, CSV export, formula helpers, and order-sheet utilities |
+| `exportDialog.html` | UI for exporting a sheet range as CSV |
+| `erpNextItems.js` | Create ERPNext items and sync the Item List report |
+| `erpNextShipmentSync.js` | Sync shipment report rows into Uploaded Invoice |
+| `erpNextInvoiceWebhook.js` | Queue and process ERPNext invoice webhook requests |
+| `generateBOMUploader.js` | Validate BOM data and generate ERPNext BOM import sheets |
+| `shipmentStatusSync.js` | Update shipment status from the configured dispatch spreadsheet |
+| `sheetManager.js` | List, copy, move, rename, and delete sheets using the Sheet Manipulator tab |
+| `spreadsheetBackup.js` | Keep a dated Drive backup of the active spreadsheet |
+| `dateTimeUtils.js` | Shared timestamp formatting used by sync modules |
 
-## Security
-- **No sensitive information is stored in the codebase.**
-- All API keys, secrets, and credentials are managed via Google Apps Script Properties.
-- `.clasp.json` (which contains your scriptId) is ignored by `.gitignore` and not pushed to GitHub.
+Apps Script files share one global namespace. Keep top-level function names unique, and use a trailing underscore for private helpers.
 
-## File Structure
-- `API-Connects.js` – ERPNext API integration
-- `upsertDispatch.js` – Supabase integration for shipments/SKUs
-- `importCSV.js` – Gmail CSV import automation
-- `sheetManipulator.js` – Bulk sheet management
-- `updateShipmentStatus.js` – Status sync from external sources
-- `Code.js` – Main menu, export dialogs, and utilities
-- `Download.html` – Export dialog UI
-- `ERPNext-Webhook.js` – Webhook endpoint for ERPNext
-- `password_bassed_api.js` – Password-based ERPNext API integration
+## Configuration
 
-## Contributing
-Pull requests and suggestions are welcome! Please ensure no secrets are added to code or version control.
+Set these values in **Apps Script → Project Settings → Script Properties**:
 
-## License
-[MIT](LICENSE) 
+| Property | Used for |
+| --- | --- |
+| `ERPNext_API_KEY` | ERPNext token authentication |
+| `ERPNext_API_SECRET` | ERPNext token authentication |
+| `ERPNext_URL` | ERPNext site base URL |
+| `externalSheetID` | Spreadsheet used by shipment status sync |
+| `backupFolderId` | Google Drive folder used for spreadsheet backups |
+
+`generateBOMUploader.js` currently targets the spreadsheet ID in its `SPREADSHEET_ID` constant. Update it if the BOM workbook changes.
+
+Sync timestamps are stored in Script Properties as `last_fetch_timestamp` and `last_synced_at`.
+
+Do not commit API keys, secrets, or credentials. `.clasp.json` contains the Apps Script project ID and is intentionally excluded from Git.
+
+## Development
+
+1. Install clasp: `npm install -g @google/clasp`.
+2. Authenticate: `clasp login`.
+3. Pull the linked Apps Script project: `clasp pull`.
+4. Push local source changes: `clasp push`.
+
+The project manifest is `appsscript.json`. The spreadsheet-bound menus are created by `onOpen()` in `spreadsheetMenusAndUtilities.js`.
