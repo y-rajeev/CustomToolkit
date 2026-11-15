@@ -200,10 +200,6 @@ function applyDynamicFormulaBasedOnColumnI() {
   applyTaxAccountHeadFormula_('ERP Import - Sales Invoice', 2, 3);
 }
 
-function applyDynamicFormulaInAutoInvoicing() {
-  applyTaxAccountHeadFormula_('Auto Invoicing', 3, 4);
-}
-
 function applyTaxAccountHeadFormula_(sheetName, headerRow, firstDataRow) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
